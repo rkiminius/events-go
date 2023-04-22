@@ -11,6 +11,7 @@ func InitEventsRoutes(e *echo.Echo) {
 	e.GET(route, getEventsHandler)
 	e.GET(route+"/:id", getEventByIdHandler)
 	e.POST(route, postEventsHandler)
+	e.PUT(route+"/:id", putEventHandler)
 	e.DELETE(route+"/:id", deleteEventHandler)
 }
 
@@ -53,6 +54,34 @@ func postEventsHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, eventFromDb)
+}
+
+func putEventHandler(c echo.Context) error {
+	objId, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	e := new(Event)
+	if err := c.Bind(e); err != nil {
+		return err
+	}
+
+	if err := validateEventInput(e); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	err = updateEvent(objId, e)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	updatedEvent, err := getById(objId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, updatedEvent)
 }
 
 func deleteEventHandler(c echo.Context) error {

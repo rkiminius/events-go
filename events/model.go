@@ -1,6 +1,7 @@
 package events
 
 import (
+	"errors"
 	"events/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,12 +22,13 @@ type Event struct {
 	Invitees     []string           `json:"invitees" bson:"invitees"`
 	Description  string             `json:"description,omitempty" bson:"description"`
 	Options      EventOptions       `json:"options,omitempty" bson:"options"`
+	UpdatedAt    *time.Time         `json:"updatedAt,omitempty" bson:"updatedAt,omitempty"`
 	DeletedAt    *time.Time         `json:"deletedAt,omitempty" bson:"deletedAt,omitempty"`
 }
 
 type EventOptions struct {
-	DefaultVideoQuality string `json:"default_video_quality"`
-	DefaultAudioQuality string `json:"default_audio_quality"`
+	DefaultVideoQuality string `json:"default_video_quality" bson:"default_video_quality"`
+	DefaultAudioQuality string `json:"default_audio_quality" bson:"default_audio_quality"`
 }
 
 var defaultMaxInvitees = 100
@@ -57,9 +59,9 @@ func insert(event *Event) (*Event, error) {
 // getById used to retrieve an event from the database by its ID.
 func getById(id primitive.ObjectID) (*Event, error) {
 	var event Event
-	filter := bson.M{"_id": id, "deletedAt": nil}
 	ctx, cancel := db.GetTimeoutContext()
 	defer cancel()
+	filter := bson.M{"_id": id, "deletedAt": nil}
 	singleResult := getCollection().FindOne(ctx, filter)
 	if err := singleResult.Decode(&event); err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -98,11 +100,45 @@ func getAll() (*[]Event, error) {
 	return &events, nil
 }
 
-func deleteEvent(objId primitive.ObjectID) (int, error) {
-	filter := bson.M{"_id": objId}
+// updateEvent used to update an event in database.
+func updateEvent(objId primitive.ObjectID, event *Event) error {
 	ctx, cancel := db.GetTimeoutContext()
 	defer cancel()
 
+	filter := bson.M{"_id": objId}
+	update := bson.M{"$set": bson.M{
+		"name":         event.Name,
+		"date":         event.Date,
+		"languages":    event.Languages,
+		"videoQuality": event.VideoQuality,
+		"audioQuality": event.AudioQuality,
+		"invitees":     event.Invitees,
+		"description":  event.Description,
+		"options": bson.M{
+			"default_video_quality": event.Options.DefaultVideoQuality,
+			"default_audio_quality": event.Options.DefaultAudioQuality,
+		},
+		"updatedAt": time.Now(),
+	}}
+
+	result, err := getCollection().UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.ModifiedCount <= 0 {
+		return errors.New("event was not updated")
+	}
+
+	return nil
+}
+
+// updateEvent used to soft delete event from database
+func deleteEvent(objId primitive.ObjectID) (int, error) {
+	ctx, cancel := db.GetTimeoutContext()
+	defer cancel()
+
+	filter := bson.M{"_id": objId}
 	update := bson.M{"$set": bson.M{"deletedAt": time.Now()}}
 	result, err := getCollection().UpdateOne(ctx, filter, update)
 	if err != nil {
