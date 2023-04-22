@@ -25,9 +25,16 @@ In order to stop all running containers.
     docker-compose down
 ```
 
-## Usage 
-### POST http://localhost:8000/events
-Required data
+## Usage
+### Retrieve all events from db
+```
+GET http://localhost:8000/events
+```
+### Post new event
+```
+POST http://localhost:8000/events
+```
+Required payload data.
 ```json
 {
   "name": "My Event",
@@ -38,7 +45,7 @@ Required data
   "invitees": ["example1@gmail.com", "example1@ss.com"]
 }
 ```
-Optional data
+Optional data.
 ```json
 {
   ...,

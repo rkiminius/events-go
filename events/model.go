@@ -57,7 +57,8 @@ func insert(event *Event) (*Event, error) {
 func getById(id primitive.ObjectID) (*Event, error) {
 	var event Event
 	filter := bson.M{"_id": id}
-	ctx, _ := db.GetTimeoutContext()
+	ctx, cancel := db.GetTimeoutContext()
+	defer cancel()
 	singleResult := getCollection().FindOne(ctx, filter)
 	if err := singleResult.Decode(&event); err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -73,7 +74,8 @@ func getById(id primitive.ObjectID) (*Event, error) {
 // getAll used to retrieve an events list from the database.
 func getAll() (*[]Event, error) {
 	var events []Event
-	ctx, _ := db.GetTimeoutContext()
+	ctx, cancel := db.GetTimeoutContext()
+	defer cancel()
 	cur, err := getCollection().Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
