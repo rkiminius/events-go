@@ -30,6 +30,10 @@ In order to stop all running containers.
 ```
 GET http://localhost:8000/events
 ```
+### Retrieve event by id
+```
+GET http://localhost:8000/events/{eventId}
+```
 ### Post new event
 ```
 POST http://localhost:8000/events

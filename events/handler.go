@@ -2,12 +2,15 @@ package events
 
 import (
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 )
 
 func InitEventsRoutes(e *echo.Echo) {
-	e.GET("/events", getEventsHandler)
-	e.POST("/events", postEventsHandler)
+	route := "/events"
+	e.GET(route, getEventsHandler)
+	e.GET(route+"/:id", getEventByIdHandler)
+	e.POST(route, postEventsHandler)
 }
 
 func getEventsHandler(c echo.Context) error {
@@ -17,6 +20,20 @@ func getEventsHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, eventsFromDb)
+}
+
+func getEventByIdHandler(c echo.Context) error {
+	objId, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	eventFromId, err := getById(objId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, eventFromId)
 }
 
 func postEventsHandler(c echo.Context) error {
