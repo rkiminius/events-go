@@ -1,0 +1,20 @@
+version: "3.2"
+services:
+
+  golang_app:
+    container_name: go-events-app
+    build: .
+    links:
+      - "mongodb:${DB_HOST}"
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    depends_on:
+      - mongodb
+
+  mongodb:
+    container_name: events-mongodb
+    image: mongo:latest
+#    hostname: localhost
+    ports:
+      - "27017:27017"
+    restart: always
