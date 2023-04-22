@@ -60,3 +60,8 @@ Optional data.
   }
 }
 ```
+
+### Delete event by id
+```
+DELETE http://localhost:8000/events/{eventId}
+```

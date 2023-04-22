@@ -11,6 +11,7 @@ func InitEventsRoutes(e *echo.Echo) {
 	e.GET(route, getEventsHandler)
 	e.GET(route+"/:id", getEventByIdHandler)
 	e.POST(route, postEventsHandler)
+	e.DELETE(route+"/:id", deleteEventHandler)
 }
 
 func getEventsHandler(c echo.Context) error {
@@ -19,7 +20,7 @@ func getEventsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, eventsFromDb)
+	return c.JSON(http.StatusOK, eventsFromDb)
 }
 
 func getEventByIdHandler(c echo.Context) error {
@@ -33,7 +34,7 @@ func getEventByIdHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, eventFromId)
+	return c.JSON(http.StatusOK, eventFromId)
 }
 
 func postEventsHandler(c echo.Context) error {
@@ -52,4 +53,18 @@ func postEventsHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, eventFromDb)
+}
+
+func deleteEventHandler(c echo.Context) error {
+	objId, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	_, err = deleteEvent(objId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

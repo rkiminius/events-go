@@ -20,7 +20,8 @@ type Event struct {
 	AudioQuality []string           `json:"audioQuality" bson:"audioQuality"`
 	Invitees     []string           `json:"invitees" bson:"invitees"`
 	Description  string             `json:"description,omitempty" bson:"description"`
-	Options      EventOptions       `json:"options" bson:"options"`
+	Options      EventOptions       `json:"options,omitempty" bson:"options"`
+	DeletedAt    *time.Time         `json:"deletedAt,omitempty" bson:"deletedAt,omitempty"`
 }
 
 type EventOptions struct {
@@ -56,7 +57,7 @@ func insert(event *Event) (*Event, error) {
 // getById used to retrieve an event from the database by its ID.
 func getById(id primitive.ObjectID) (*Event, error) {
 	var event Event
-	filter := bson.M{"_id": id}
+	filter := bson.M{"_id": id, "deletedAt": nil}
 	ctx, cancel := db.GetTimeoutContext()
 	defer cancel()
 	singleResult := getCollection().FindOne(ctx, filter)
@@ -73,7 +74,7 @@ func getById(id primitive.ObjectID) (*Event, error) {
 
 // getAll used to retrieve an events list from the database.
 func getAll() (*[]Event, error) {
-	var events []Event
+	events := make([]Event, 0)
 	ctx, cancel := db.GetTimeoutContext()
 	defer cancel()
 	cur, err := getCollection().Find(ctx, bson.D{})
@@ -87,12 +88,27 @@ func getAll() (*[]Event, error) {
 		if err != nil {
 			return nil, err
 		}
-		events = append(events, event)
+		if event.DeletedAt == nil {
+			events = append(events, event)
+		}
 	}
 	if err := cur.Err(); err != nil {
 		return nil, err
 	}
 	return &events, nil
+}
+
+func deleteEvent(objId primitive.ObjectID) (int, error) {
+	filter := bson.M{"_id": objId}
+	ctx, cancel := db.GetTimeoutContext()
+	defer cancel()
+
+	update := bson.M{"$set": bson.M{"deletedAt": time.Now()}}
+	result, err := getCollection().UpdateOne(ctx, filter, update)
+	if err != nil {
+		return 0, err
+	}
+	return int(result.ModifiedCount), nil
 }
 
 func getCollection() *mongo.Collection {
