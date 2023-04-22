@@ -28,6 +28,8 @@ type EventOptions struct {
 	DefaultAudioQuality string `json:"default_audio_quality"`
 }
 
+var defaultMaxInvitees = 100
+
 // insert function used to insert a new event into a database collection.
 func insert(event *Event) (*Event, error) {
 	collection := getCollection()
@@ -66,6 +68,29 @@ func getById(id primitive.ObjectID) (*Event, error) {
 	}
 
 	return &event, nil
+}
+
+// getAll used to retrieve an events list from the database.
+func getAll() (*[]Event, error) {
+	var events []Event
+	ctx, _ := db.GetTimeoutContext()
+	cur, err := getCollection().Find(ctx, bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	for cur.Next(ctx) {
+		var event Event
+		err := cur.Decode(&event)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	if err := cur.Err(); err != nil {
+		return nil, err
+	}
+	return &events, nil
 }
 
 func getCollection() *mongo.Collection {

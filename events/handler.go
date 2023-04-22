@@ -6,7 +6,17 @@ import (
 )
 
 func InitEventsRoutes(e *echo.Echo) {
+	e.GET("/events", getEventsHandler)
 	e.POST("/events", postEventsHandler)
+}
+
+func getEventsHandler(c echo.Context) error {
+	eventsFromDb, err := getAll()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, eventsFromDb)
 }
 
 func postEventsHandler(c echo.Context) error {
@@ -21,7 +31,7 @@ func postEventsHandler(c echo.Context) error {
 
 	eventFromDb, err := insert(e)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusCreated, eventFromDb)

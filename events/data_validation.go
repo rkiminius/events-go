@@ -22,7 +22,6 @@ var audioQualities = []string{
 // validateEventInput This method is used to validate the input data for an event,
 // represented by the Event struct, to ensure that it meets the required criteria.
 func validateEventInput(event *Event) error {
-	var maxInvitees = 100
 
 	if event.Name == "" {
 		return errors.New("missing event name")
@@ -71,8 +70,8 @@ func validateEventInput(event *Event) error {
 		}
 	}
 
-	if len(event.Invitees) > maxInvitees {
-		return errors.New(fmt.Sprintf("more than %d invitees are not allowed", maxInvitees))
+	if len(event.Invitees) > defaultMaxInvitees {
+		return errors.New(fmt.Sprintf("more than %d invitees are not allowed", defaultMaxInvitees))
 	}
 
 	return nil
