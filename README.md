@@ -60,6 +60,20 @@ Optional data.
   }
 }
 ```
+### Update event by id
+```
+PUT http://localhost:8000/events/{eventId}
+```
+```json
+{
+  "name": "Updated event name",
+  "date": "2023-04-30T14:00:00Z",
+  "languages": ["English", "Spanish"],
+  "videoQuality": ["720p", "1080p"],
+  "audioQuality": ["High", "Low"],
+  "invitees": ["example1@gmail.com", "example1@ss.com"]
+}
+```
 
 ### Delete event by id
 ```
